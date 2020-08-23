@@ -12,12 +12,15 @@ from adafruit_hid.keycode import Keycode
 # A simple neat keyboard demo in CircuitPython
 
 # The pins we'll use, each will have an internal pullup
-keypress_pins = [board.A1, board.A2]
+# keypress_pins = [board.A1, board.A2]
+keypress_pins = [board.A1]
+
 # Our array of key objects
 key_pin_array = []
 # The Keycode sent for each button, will be paired with a control key
-keys_pressed = [Keycode.A, "Hello World!\n"]
-control_key = Keycode.SHIFT
+# keys_pressed = [Keycode.A, "Hello World!\n"]
+keys_pressed = [Keycode.A]
+control_key = Keycode.ALT
 
 # The keyboard object!
 time.sleep(1)  # Sleep for a bit to avoid a race condition on some systems
@@ -33,6 +36,8 @@ for pin in keypress_pins:
 
 led = digitalio.DigitalInOut(board.D13)
 led.direction = digitalio.Direction.OUTPUT
+button_light = digitalio.DigitalInOut(board.D7)
+button_light.direction = digitalio.Direction.OUTPUT
 
 print("Waiting for key pin...")
 
@@ -45,6 +50,7 @@ while True:
 
             # Turn on the red LED
             led.value = True
+            button_light.value = True
 
             while not key_pin.value:
                 pass  # Wait for it to be ungrounded!
@@ -58,5 +64,6 @@ while True:
 
             # Turn off the red LED
             led.value = False
+            button_light = False
 
     time.sleep(0.01)
