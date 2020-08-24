@@ -34,6 +34,7 @@ see import list
 ### Learnings
 - 082220: Box fit shape is harder with a larger # of joinery points and when the box is perfectly square. Seems like you could create more intuitive joinery with pieces not the same size, or joinery with different sizes on different panels?
 - 082220: Acrylic needs few joinery points when merged via acrylic cement.
+- 082320: adafruit version can send strings, todbot version handles continuous keystrokes
 
 ### Feature Requests
 - 082220: Add nubs on flat side of button to ME file

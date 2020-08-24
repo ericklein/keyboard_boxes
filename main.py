@@ -1,4 +1,8 @@
-# CircuitPython demo - Keyboard emulator
+#  Project Name:   keyboard_boxes
+#  Developer:      Eric Klein Jr. (temp2@ericklein.com)
+#  Description:    USB keyboard events from standard switches
+
+# See README.md for target information, revision history, feature requests, etc.
 
 import time
 
@@ -64,6 +68,6 @@ while True:
 
             # Turn off the red LED
             led.value = False
-            button_light = False
+            button_light.value = False
 
     time.sleep(0.01)
