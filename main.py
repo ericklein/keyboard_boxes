@@ -1,73 +1,82 @@
 #  Project Name:   keyboard_boxes
 #  Developer:      Eric Klein Jr. (temp2@ericklein.com)
 #  Description:    USB keyboard events from standard switches
-
 # See README.md for target information, revision history, feature requests, etc.
 
 import time
-
 import board
-import digitalio
+from digitalio import DigitalInOut, Direction, Pull
+# import digitalio #adafruit version
+# from analogio import AnalogOut, AnalogIn  #why do we need it?
+
 import usb_hid
 from adafruit_hid.keyboard import Keyboard
-from adafruit_hid.keyboard_layout_us import KeyboardLayoutUS
 from adafruit_hid.keycode import Keycode
+from adafruit_debouncer import Debouncer
 
-# A simple neat keyboard demo in CircuitPython
+print("imports ok")
 
-# The pins we'll use, each will have an internal pullup
-# keypress_pins = [board.A1, board.A2]
-keypress_pins = [board.A1]
+# Your config!
+# Set this to be which pins you're using, and what to do.
+# For list of keycodes, see:
+# https://circuitpython.readthedocs.io/projects/hid/en/latest/api.html
+button_config = [
+        # pin,     (Keycodes and modifier keycodes)
+        [board.A1, (Keycode.SPACEBAR,) ],  # just a space
+]
+debouncers = []
 
-# Our array of key objects
-key_pin_array = []
-# The Keycode sent for each button, will be paired with a control key
-# keys_pressed = [Keycode.A, "Hello World!\n"]
-keys_pressed = [Keycode.A]
-control_key = Keycode.ALT
+#        [board.D2, (Keycode.A, Keycode.SHIFT, Keycode.GUI) ],# zoom mute
+#        [board.D3, (Keycode.C, Keycode.CONTROL) ],
+#        [board.D4, (Keycode.H, Keycode.GUI) ], # CMD-H hide
 
-# The keyboard object!
-time.sleep(1)  # Sleep for a bit to avoid a race condition on some systems
-keyboard = Keyboard(usb_hid.devices)
-keyboard_layout = KeyboardLayoutUS(keyboard)  # We're in the US :)
+# start up the keyboardy-ness
+#time.sleep(1)  # Sleep for a bit to avoid a race condition on some systems
+kbd = Keyboard(usb_hid.devices)
 
-# Make all pin objects inputs with pullups
-for pin in keypress_pins:
-    key_pin = digitalio.DigitalInOut(pin)
-    key_pin.direction = digitalio.Direction.INPUT
-    key_pin.pull = digitalio.Pull.UP
-    key_pin_array.append(key_pin)
+print("keyboard init ok")
 
-led = digitalio.DigitalInOut(board.D13)
-led.direction = digitalio.Direction.OUTPUT
-button_light = digitalio.DigitalInOut(board.D7)
-button_light.direction = digitalio.Direction.OUTPUT
+# Built in red LED
+led = DigitalInOut(board.D13)
+led.direction = Direction.OUTPUT
+button_light = DigitalInOut(board.D7)
+button_light.direction = Direction.OUTPUT
 
-print("Waiting for key pin...")
+print("LED setup ok")
 
-while True:
-    # Check each pin
-    for key_pin in key_pin_array:
-        if not key_pin.value:  # Is it grounded?
-            i = key_pin_array.index(key_pin)
-            print("Pin #%d is grounded." % i)
+# set up the pins and the debouncer on each pin
+for (pin,*rest) in button_config:
+        button = DigitalInOut(pin)
+        button.direction = Direction.INPUT
+        button.pull = Pull.UP
+        debouncers.append( Debouncer(button) )
 
-            # Turn on the red LED
-            led.value = True
-            button_light.value = True
+print("ready for main loop")
 
-            while not key_pin.value:
-                pass  # Wait for it to be ungrounded!
-            # "Type" the Keycode or string
-            key = keys_pressed[i]  # Get the corresponding Keycode or string
-            if isinstance(key, str):  # If it's a string...
-                keyboard_layout.write(key)  # ...Print the string
-            else:  # If it's not a string...
-                keyboard.press(control_key, key)  # "Press"...
-                keyboard.release_all()  # ..."Release"!
+######################### MAIN LOOP ##############################
+def main():
+    while True:
+        for i in range(len(button_config)):
+            button = debouncers[i]
+            button.update()
 
-            # Turn off the red LED
-            led.value = False
-            button_light.value = False
+            (pin,keycodes) = button_config[i]
+            print("button",i,"ready")
+            if button.fell:
+                print("push:",pin,"keycodes:",keycodes)
+                #kbd.send(Keycode.SHIFT,Keycode.A)
+                kbd.press(*keycodes)
+                led.value = True
+                button_light.value = True
 
-    time.sleep(0.01)
+            if button.rose:
+                print("release:",pin)
+                kbd.release(*keycodes)
+                led.value = False
+                button_light.value = False
+
+            time.sleep(0.01)
+######
+
+# actually call main
+main()
